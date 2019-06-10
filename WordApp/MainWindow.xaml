@@ -1,4 +1,5 @@
-﻿<Window x:Class="WordApp.MainWindow"
+﻿<Window Name="mainWindow"
+    x:Class="WordApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,7 +15,15 @@
      TextOptions.TextRenderingMode="Auto"
      Background="{DynamicResource MaterialDesignPaper}"
      FontFamily="{DynamicResource MaterialDesignFont}">
-    <Grid>
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.SaveHotkey}" Executed="SaveMenuClick"/>
+        <CommandBinding Command="{x:Static local:MainWindow.OpenHotkey}" Executed="OpenMenuClick"/>
+        <CommandBinding Command="{x:Static local:MainWindow.CloseHotkey}" Executed="ExitMenuClick"/>
+        <CommandBinding Command="{x:Static local:MainWindow.PrintHotkey}" Executed="PrintMenuClick"/>
+        <CommandBinding Command="{x:Static local:MainWindow.DateAndTimeHotkey}" Executed="DateAndTimeClick"/>
+        <CommandBinding Command="{x:Static local:MainWindow.SelectAllHotkey}" Executed="SelectAllClick"/>
+    </Window.CommandBindings>
+    <Grid Name="grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="48*"/>
             <RowDefinition Height="371*"/>
@@ -22,26 +31,35 @@
 
         <Menu>
             <MenuItem Header="Файл">
-                <MenuItem Name="OpenMenu" Header="Открыть" Click="OpenMenuClick"/>
-                <MenuItem Name="SaveMenu" Header="Сохранить" Click="SaveMenuClick"/>
+                <MenuItem Name="openMenu" Header="Открыть        Ctrl + O" Click="OpenMenuClick"/>
+                <MenuItem Name="saveMenu" Header="Сохранить     Ctrl + S" Click="SaveMenuClick"/>
                 <Separator />
-                <MenuItem Header="Печать"/>
+                <MenuItem Name="printMenu" Header="Печать           Ctrl + P" Click="PrintMenuClick"/>
                 <Separator />
-                <MenuItem Header="Выход"/>
+                <MenuItem Name="exitMenu" Header="Выход            Ctrl + E" Click="ExitMenuClick"/>
             </MenuItem>
-            <MenuItem Header="Правка" ></MenuItem>
+            <MenuItem Header="Правка" >
+                <MenuItem Name="selectAll" Header="Выделить все        Ctrl + A" Click="SelectAllClick"/>
+                <MenuItem Name="dateAndTime" Header="Дата и время        F5" Click="DateAndTimeClick"/>
+            </MenuItem>
             <MenuItem Header="Формат" >
-                <MenuItem Header="Перенос по словам"/>
+                <!--<MenuItem Name="wordWrap" Click="WordWrapClick" Header="Перенос по словам">
+                    <CheckBox Name="wordWrapCheckBox"/>
+                </MenuItem>-->
+                <CheckBox Name="wordWrapCheckBox" Content="Перенос по словам" Checked="wordWrapCheckBoxChecked" Unchecked="wordWrapCheckBoxUnchecked"/>
                 <MenuItem Name="fontFamily" Header="Шрифт" Click="FontFamilyItemClick">
                     <ListBox Name="fontFamilyListBox" Height="46" Width="120">
                     </ListBox>
                 </MenuItem>
             </MenuItem>
-            <MenuItem Header="Вид" ></MenuItem>
-            <MenuItem Header="Справка" ></MenuItem>
+            <MenuItem Header="Вид" >
+                <MenuItem Header="Строка состояния" Foreground="#FF999999"/>
+            </MenuItem>
+            <MenuItem Header="Справка">
+                <MenuItem Name="reference" Header="Просмотреть справку" Click="ReferenceClick"/>
+            </MenuItem>
         </Menu>
-        <RichTextBox Name="textBoxForUser" Grid.Row="1">
-        </RichTextBox>
+        <RichTextBox Name="UserRichTextBox" Grid.Row="1"/>
 
 
     </Grid>

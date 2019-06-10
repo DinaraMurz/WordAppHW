@@ -14,29 +14,35 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 using Microsoft.Win32;
+using System.Threading;
 
 namespace WordApp
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+        private string _saveUri;
+        private Timer timer;
+
         public MainWindow()
         {
             InitializeComponent();
-
-            //foreach (var fontFamilyName in FontFamily.FamilyNames)
-            //{
-            //    fontFamilyListBox.Items.Add(fontFamilyName.ToString());
-            //}
-
-
+            
             foreach (FontFamily fontFamily in Fonts.SystemFontFamilies)
             {
-                // FontFamily.Source contains the font family name.
                 fontFamilyListBox.Items.Add(fontFamily.Source);
             }
+            wordWrapCheckBox.IsChecked = true;
+            
+
+            SaveHotkey.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
+            OpenHotkey.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control));
+            CloseHotkey.InputGestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
+            PrintHotkey.InputGestures.Add(new KeyGesture(Key.P, ModifierKeys.Control));
+            DateAndTimeHotkey.InputGestures.Add(new KeyGesture(Key.F5));
+            SelectAllHotkey.InputGestures.Add(new KeyGesture(Key.A, ModifierKeys.Control));
+
+            _saveUri = "NewFile_" + Guid.NewGuid().ToString() + ".txt";
+            timer = new Timer(SaveFile, _saveUri, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(60));
         }
 
         private string GetPathOfFile()
@@ -51,8 +57,9 @@ namespace WordApp
             return fileName;
         }
 
-        private void SaveFile(string path = null)
+        private void SaveFile(object pathObj = null)
         {
+            var path = pathObj as string;
             if (path == null)
             {
                 path = GetPathOfFile();
@@ -60,11 +67,11 @@ namespace WordApp
 
             try
             {
-                textBoxForUser.SelectAll();
-
+                UserRichTextBox.SelectAll();
+                
                 using (var ws = new StreamWriter(path))
                 {
-                    ws.WriteLine(textBoxForUser.Selection.Text);
+                    ws.WriteLine(UserRichTextBox.Selection.Text);
                 }
             }
             catch (Exception ex)
@@ -75,7 +82,6 @@ namespace WordApp
 
         private void OpenFile(string path = null)
         {
-            ////////
             if (path == null)
             {
                 path = GetPathOfFile();
@@ -83,9 +89,9 @@ namespace WordApp
 
             try
             {
-                textBoxForUser.SelectAll();
+                UserRichTextBox.SelectAll();
 
-                textBoxForUser.Document.Blocks.Add(new Paragraph(new Run(System.IO.File.ReadAllText(path))));
+                UserRichTextBox.Document.Blocks.Add(new Paragraph(new Run(System.IO.File.ReadAllText(path))));
             }
             catch (Exception ex)
             {
@@ -96,7 +102,7 @@ namespace WordApp
 
         private void FontFamilyItemClick(object sender, RoutedEventArgs e)
         {
-            textBoxForUser.FontFamily = new FontFamily(fontFamilyListBox.SelectedValue.ToString());
+            UserRichTextBox.FontFamily = new FontFamily(fontFamilyListBox.SelectedValue.ToString());
         }
 
         private void OpenMenuClick(object sender, RoutedEventArgs e)
@@ -109,31 +115,73 @@ namespace WordApp
             SaveFile();
         }
 
-        
+        //private void AutoSave()
+        //{
+        //    string path = "";
+        //    try
+        //    {
+        //        UserRichTextBox.SelectAll();
 
-        private void AutoSave()
+        //        using (FileStream fs = File.Create(path))
+        //        {
+        //            Byte[] title = new UTF8Encoding(true).GetBytes("AutoSave");
+        //            fs.Write(title, 0, title.Length);
+        //            byte[] author = new UTF8Encoding(true).GetBytes(UserRichTextBox.Selection.Text);
+        //            fs.Write(author, 0, author.Length);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show(ex.Message);
+        //    }
+        //    //Assembly.GetExecutingAssembly().Location;
+        //}
+
+        private void wordWrapCheckBoxChecked(object sender, RoutedEventArgs e)
         {
-            ////////////
-            string path = "";
-            try
-            {
-                textBoxForUser.SelectAll();
-
-                using (FileStream fs = File.Create(path))
-                {
-                    Byte[] title = new UTF8Encoding(true).GetBytes("AutoSave");
-                    fs.Write(title, 0, title.Length);
-                    byte[] author = new UTF8Encoding(true).GetBytes(textBoxForUser.Selection.Text);
-                    fs.Write(author, 0, author.Length);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            //Assembly.GetExecutingAssembly().Location;
+            UserRichTextBox.Width = grid.Width;
         }
 
-        ///////быстрый доступ/ горячие клавиши/ потоки
+        private void wordWrapCheckBoxUnchecked(object sender, RoutedEventArgs e)
+        {
+            UserRichTextBox.Width = int.MaxValue;
+        }
+        
+        public static RoutedCommand SaveHotkey = new RoutedCommand();
+        public static RoutedCommand OpenHotkey = new RoutedCommand();
+        public static RoutedCommand CloseHotkey = new RoutedCommand();
+        public static RoutedCommand PrintHotkey = new RoutedCommand();
+        public static RoutedCommand DateAndTimeHotkey = new RoutedCommand();
+        public static RoutedCommand SelectAllHotkey = new RoutedCommand();
+
+        private void ExitMenuClick(object sender, RoutedEventArgs e)
+        {
+            mainWindow.Close();
+        }
+
+        private void PrintMenuClick(object sender, RoutedEventArgs e)
+        {
+            PrintDialog printDialog = new PrintDialog();
+            if (printDialog.ShowDialog() == true)
+            {
+                printDialog.PrintVisual(UserRichTextBox, "Распечатываем Документ");
+            }
+        }
+
+        private void ReferenceClick(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://www.bing.com/search?q=get+help+with+notepad+in+windows+10&filters=guid:%224466414-en-dia%22%20lang:%22en%22&form=T00032&ocid=HelpPane-BingIA");
+        }
+
+        private void DateAndTimeClick(object sender, RoutedEventArgs e)
+        {
+            UserRichTextBox.SelectAll();
+            UserRichTextBox.Document.Blocks.Add(new Paragraph(new Run(DateTime.Now.ToShortTimeString() + " " + DateTime.Now.ToShortDateString())));
+        }
+
+        private void SelectAllClick(object sender, RoutedEventArgs e)
+        {
+            UserRichTextBox.SelectAll();
+        }
     }
 }
